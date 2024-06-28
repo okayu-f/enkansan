@@ -2,6 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import yfinance as yf
+from functools import lru_cache
+from datetime import datetime
 
 app = FastAPI()
 
@@ -16,9 +18,10 @@ app.add_middleware(
 )
 
 
-def get_stock_data(ticker):
+@lru_cache(maxsize=32)
+def get_cached_stock_data(ticker, date_str):
     stock = yf.Ticker(ticker)
-    hist = stock.history(start="2020-01-01")
+    hist = stock.history(start="2020-01-01", end=date_str)
 
     data = []
     for date, row in hist.iterrows():
@@ -31,10 +34,7 @@ def get_stock_data(ticker):
             "yen": round(yen_price)
         })
 
-    return {
-        "ticker": ticker,
-        "histories": data
-    }
+    return data
 
 
 def get_exchange_rate(date):
@@ -47,10 +47,15 @@ def get_exchange_rate(date):
 async def stock_data():
     tickers = ['SPYD', 'HDV']
     result = {}
+    today = datetime.now().strftime('%Y-%m-%d')
     for ticker in tickers:
-        result[ticker.lower()] = get_stock_data(ticker)
+        result[ticker.lower()] = {
+            "ticker": ticker,
+            "histories": get_cached_stock_data(ticker, today)
+        }
 
     return JSONResponse(content=result)
+
 
 if __name__ == "__main__":
     import uvicorn
