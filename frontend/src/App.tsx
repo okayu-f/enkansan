@@ -1,17 +1,18 @@
-import React, { useState, useEffect } from "react";
-import axios from "axios";
+import { useState, useEffect } from 'react';
+import type React from 'react';
+import axios from 'axios';
 
-function App() {
+const App: React.FC = () => {
   const [stockData, setStockData] = useState(null);
 
   useEffect(() => {
     axios
-      .get("http://localhost:8000/stock-data")
+      .get('http://localhost:8000/stock-data')
       .then((response) => {
         setStockData(response.data);
       })
       .catch((error) => {
-        console.error("Error fetching stock data:", error);
+        console.error('Error fetching stock data:', error);
       });
   }, []);
 
@@ -21,6 +22,6 @@ function App() {
       {stockData ? <pre>{JSON.stringify(stockData, null, 2)}</pre> : <p>Loading...</p>}
     </div>
   );
-}
+};
 
 export default App;
