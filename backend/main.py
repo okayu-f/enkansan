@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 import yfinance as yf
 from functools import lru_cache
 from datetime import datetime, timedelta
+import typing
 
 app = FastAPI()
 
@@ -11,7 +12,7 @@ app = FastAPI()
 # CORSミドルウェアを追加
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost", "http://localhost:80"],  # フロントエンドのオリジンを許可
+    allow_origins=["http://localhost", "http://localhost:80", "http://localhost:5173"],  # フロントエンドのオリジンを許可
     allow_credentials=True,
     allow_methods=["*"],  # すべてのHTTPメソッドを許可
     allow_headers=["*"],  # すべてのヘッダーを許可
@@ -32,10 +33,11 @@ def get_cached_stock_data(ticker, date_str):
     fx_hist = fx.history(start=start_date.strftime('%Y-%m-%d'), end=date_str)
 
     data = []
-    for date, row in hist.iterrows():
+    for index, row in hist.iterrows():
+        date = typing.cast(datetime, index)
         # 最も近い日付の為替レートを使用
         closest_fx_date = min(fx_hist.index, key=lambda x: abs(x - date))
-        exchange_rate = fx_hist.loc[closest_fx_date, 'Close']
+        exchange_rate: float = fx_hist.at[closest_fx_date, 'Close']
 
         dollar_price = row['Close']
         yen_price = dollar_price * exchange_rate
