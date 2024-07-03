@@ -41,7 +41,7 @@ def log_api_call(func):
 def get_cached_stock_data(ticker, date_str):
     stock = yf.Ticker(ticker)
     end_date = datetime.strptime(date_str, '%Y-%m-%d')
-    start_date = end_date - timedelta(days=365)  # 1年分のデータを取得
+    start_date = end_date - timedelta(days=365 * 3)  # 1年分のデータを取得
 
     # 株価データを取得
     hist = stock.history(start=start_date.strftime('%Y-%m-%d'), end=date_str)

@@ -5,7 +5,7 @@ import './App.css';
 const App: React.FC = () => {
   return (
     <>
-      <h1>Hello, World!</h1>
+      <h1>円換算だといくらなのツール</h1>
       <Chart />
     </>
   );

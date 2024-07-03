@@ -20,11 +20,14 @@ interface StockData {
   }[];
 }
 
+type TimeRange = '1M' | '3M' | '6M' | '1Y' | '3Y';
+
 const Chart: React.FC = () => {
   const [dataKey, setDataKey] = useState<'dollar' | 'yen'>('yen');
   const [selectedTicker, setSelectedTicker] = useState<'spyd' | 'hdv'>('spyd');
   const [stockData, setStockData] = useState<Record<string, StockData> | null>(null);
   const [loading, setLoading] = useState(true);
+  const [timeRange, setTimeRange] = useState<TimeRange>('1Y');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,6 +55,35 @@ const Chart: React.FC = () => {
     setSelectedTicker(event.target.value as 'spyd' | 'hdv');
   };
 
+  const handleTimeRangeChange = (_event: React.MouseEvent<HTMLElement>, newTimeRange: TimeRange) => {
+    if (newTimeRange !== null) {
+      setTimeRange(newTimeRange);
+    }
+  };
+
+  const filterDataByTimeRange = (data: StockData['histories']) => {
+    const now = new Date();
+    const startDate = new Date(now);
+    switch (timeRange) {
+      case '1M':
+        startDate.setMonth(now.getMonth() - 1);
+        break;
+      case '3M':
+        startDate.setMonth(now.getMonth() - 3);
+        break;
+      case '6M':
+        startDate.setMonth(now.getMonth() - 6);
+        break;
+      case '1Y':
+        startDate.setFullYear(now.getFullYear() - 1);
+        break;
+      case '3Y':
+        startDate.setFullYear(now.getFullYear() - 3);
+        break;
+    }
+    return data.filter((item) => new Date(item.date) >= startDate);
+  };
+
   if (loading) {
     return <CircularProgress />;
   }
@@ -59,6 +91,8 @@ const Chart: React.FC = () => {
   if (!stockData) {
     return <div>No data available</div>;
   }
+
+  const filteredData = filterDataByTimeRange(stockData[selectedTicker].histories);
 
   return (
     <>
@@ -74,11 +108,18 @@ const Chart: React.FC = () => {
           <ToggleButton value="yen">円</ToggleButton>
           <ToggleButton value="dollar">ドル</ToggleButton>
         </ToggleButtonGroup>
+        <ToggleButtonGroup color="primary" value={timeRange} exclusive onChange={handleTimeRangeChange} aria-label="time range">
+          <ToggleButton value="1M">1M</ToggleButton>
+          <ToggleButton value="3M">3M</ToggleButton>
+          <ToggleButton value="6M">6M</ToggleButton>
+          <ToggleButton value="1Y">1Y</ToggleButton>
+          <ToggleButton value="3Y">3Y</ToggleButton>
+        </ToggleButtonGroup>
       </Box>
       <LineChart
         width={1000}
         height={500}
-        data={stockData[selectedTicker].histories}
+        data={filteredData}
         margin={{
           top: 5,
           right: 30,
