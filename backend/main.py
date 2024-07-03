@@ -2,24 +2,42 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import yfinance as yf
-from functools import lru_cache
+from functools import lru_cache, wraps
 from datetime import datetime, timedelta
 import typing
+import logging
+
+# カスタムロガーの設定
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = logging.StreamHandler()
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 app = FastAPI()
-
 
 # CORSミドルウェアを追加
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost", "http://localhost:80", "http://localhost:5173"],  # フロントエンドのオリジンを許可
+    allow_origins=["http://localhost", "http://localhost:80", "http://localhost:5173"],
     allow_credentials=True,
-    allow_methods=["*"],  # すべてのHTTPメソッドを許可
-    allow_headers=["*"],  # すべてのヘッダーを許可
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 
+def log_api_call(func):
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        logger.info("API call to %s with args: %s, kwargs: %s", func.__name__, args, kwargs)
+        return func(*args, **kwargs)
+    return wrapper
+
+
 @lru_cache(maxsize=32)
+@log_api_call
 def get_cached_stock_data(ticker, date_str):
     stock = yf.Ticker(ticker)
     end_date = datetime.strptime(date_str, '%Y-%m-%d')
