@@ -84,6 +84,20 @@ const Chart: React.FC = () => {
     return data.filter((item) => new Date(item.date) >= startDate);
   };
 
+  const calculateYAxisDomain = (data: StockData['histories'], key: 'dollar' | 'yen') => {
+    if (data.length === 0) return [0, 'auto'];
+
+    const values = data.map((item) => item[key]);
+    const min = Math.min(...values);
+    const max = Math.max(...values);
+    const padding = (max - min) * 0.1; // 10%のパディングを追加
+
+    return [
+      Math.max(0, Math.floor(min - padding)), // 最小値を切り捨て
+      Math.ceil(max + padding),
+    ];
+  };
+
   if (loading) {
     return <CircularProgress />;
   }
@@ -93,6 +107,7 @@ const Chart: React.FC = () => {
   }
 
   const filteredData = filterDataByTimeRange(stockData[selectedTicker].histories);
+  const yAxisDomain = calculateYAxisDomain(filteredData, dataKey);
 
   return (
     <>
@@ -129,7 +144,7 @@ const Chart: React.FC = () => {
       >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="date" />
-        <YAxis />
+        <YAxis domain={yAxisDomain as [number, number]} tickFormatter={(value) => Math.round(value).toString()} />
         <Tooltip />
         <Legend />
         <Line type="linear" dataKey={dataKey} stroke="#8884d8" activeDot={{ r: 8 }} animationDuration={300} />
