@@ -84,18 +84,36 @@ const Chart: React.FC = () => {
     return data.filter((item) => new Date(item.date) >= startDate);
   };
 
-  const calculateYAxisDomain = (data: StockData['histories'], key: 'dollar' | 'yen') => {
-    if (data.length === 0) return [0, 'auto'];
+  const calculateYAxisDomain = (data: StockData['histories'], key: 'dollar' | 'yen'): [number, number] => {
+    if (data.length === 0) return [0, 0];
 
     const values = data.map((item) => item[key]);
-    const min = Math.min(...values);
-    const max = Math.max(...values);
-    const padding = (max - min) * 0.1; // 10%のパディングを追加
+    const minValue = Math.min(...values);
+    const maxValue = Math.max(...values);
 
-    return [
-      Math.max(0, Math.floor(min - padding)), // 最小値を切り捨て
-      Math.ceil(max + padding),
-    ];
+    // 適切な刻み幅を決定
+    const range = maxValue - minValue;
+    let step = range / 4; // 4段階に分割
+
+    // stepを丸める
+    const power = Math.pow(10, Math.floor(Math.log10(step)));
+    step = Math.ceil(step / power) * power;
+
+    // 最小値と最大値を調整
+    const minDomain = Math.floor(minValue / step) * step;
+    const maxDomain = Math.ceil(maxValue / step) * step;
+
+    return [minDomain, maxDomain];
+  };
+
+  const getYAxisTicks = (domain: [number, number]) => {
+    const [min, max] = domain;
+    const step = (max - min) / 5; // 5分割を想定
+    const ticks = [];
+    for (let i = min; i <= max + step / 2; i += step) {
+      ticks.push(Number(i.toFixed(2))); // 小数点2桁まで考慮
+    }
+    return ticks;
   };
 
   if (loading) {
@@ -108,6 +126,7 @@ const Chart: React.FC = () => {
 
   const filteredData = filterDataByTimeRange(stockData[selectedTicker].histories);
   const yAxisDomain = calculateYAxisDomain(filteredData, dataKey);
+  const yAxisTicks = getYAxisTicks(yAxisDomain);
 
   return (
     <>
@@ -144,7 +163,17 @@ const Chart: React.FC = () => {
       >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="date" />
-        <YAxis domain={yAxisDomain as [number, number]} tickFormatter={(value) => Math.round(value).toString()} />
+        <YAxis
+          domain={yAxisDomain}
+          ticks={yAxisTicks}
+          tickFormatter={(value) => {
+            if (dataKey === 'yen') {
+              return new Intl.NumberFormat('ja-JP', { style: 'currency', currency: 'JPY', maximumFractionDigits: 0 }).format(value);
+            } else {
+              return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+            }
+          }}
+        />
         <Tooltip />
         <Legend />
         <Line type="linear" dataKey={dataKey} stroke="#8884d8" activeDot={{ r: 8 }} animationDuration={300} />
