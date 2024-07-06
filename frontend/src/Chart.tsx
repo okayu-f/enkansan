@@ -33,7 +33,7 @@ const Chart: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:8000/stock-data');
+        const response = await axios.get('http://localhost:8000/api/stock-data');
         setStockData(response.data);
       } catch (error) {
         console.error('Error fetching stock data:', error);

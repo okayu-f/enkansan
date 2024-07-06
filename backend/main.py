@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
+import os
 import yfinance as yf
 from functools import lru_cache, wraps
 from datetime import datetime, timedelta
@@ -69,7 +71,7 @@ def get_cached_stock_data(ticker, date_str):
     return data
 
 
-@app.get("/stock-data")
+@app.get("/api/stock-data")
 async def stock_data():
     tickers = ['SPYD', 'HDV']
     result = {}
@@ -81,6 +83,36 @@ async def stock_data():
         }
 
     return JSONResponse(content=result)
+
+
+app.mount("/assets", StaticFiles(directory="frontend/build/assets", html=True), name="assets")
+
+
+def find_favicon():
+    build_dir = "frontend/build/assets"
+    for file in os.listdir(build_dir):
+        if file.startswith("favicon") and file.endswith(".ico"):
+            return os.path.join(build_dir, file)
+    return None
+
+
+@app.get("/favicon.ico")
+async def favicon():
+    favicon_path = find_favicon()
+    if favicon_path:
+        return FileResponse(favicon_path)
+    else:
+        return {"error": "Favicon not found"}, 404
+
+
+@app.get("/")
+async def read_root():
+    return FileResponse("frontend/build/index.html")
+
+
+@app.get("/{full_path:path}")
+async def serve_react_app(full_path: str):
+    return FileResponse("frontend/build/index.html")
 
 
 if __name__ == "__main__":
