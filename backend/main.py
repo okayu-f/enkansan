@@ -105,6 +105,11 @@ async def favicon():
         return {"error": "Favicon not found"}, 404
 
 
+@app.get("/health")
+async def health_check():
+    return {"status": "healthy"}
+
+
 @app.get("/")
 async def read_root():
     return FileResponse("frontend/build/index.html")

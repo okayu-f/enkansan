@@ -1,5 +1,5 @@
-# ベースイメージとしてNode.js 20を使用
-FROM node:20
+# ベースイメージとしてNode.js 20 alpineを使用
+FROM node:20-alpine
 
 # 作業ディレクトリを設定
 WORKDIR /app
