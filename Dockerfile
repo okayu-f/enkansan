@@ -18,15 +18,20 @@ RUN yarn build
 
 # Pythonステージ
 FROM python:3.11-slim
+ENV ENV=production
 
 WORKDIR /app
+
+# システムの依存関係をインストール
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Pythonの依存関係をインストール
 COPY backend/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # フロントエンドのビルド結果をコピー
-# distディレクトリからコピーするように変更
 COPY --from=build /app/frontend/dist ./frontend/dist
 
 # バックエンドのコードをコピー

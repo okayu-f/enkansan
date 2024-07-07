@@ -10,6 +10,8 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import CircularProgress from '@mui/material/CircularProgress';
 
+const API_URL = import.meta.env.VITE_API_URL || '';
+
 interface StockData {
   ticker: string;
   histories: {
@@ -33,7 +35,7 @@ const Chart: React.FC = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('http://localhost:8000/api/stock-data');
+        const response = await axios.get(`${API_URL}/api/stock-data`);
         setStockData(response.data);
       } catch (error) {
         console.error('Error fetching stock data:', error);

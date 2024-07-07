@@ -20,14 +20,25 @@ logger.addHandler(handler)
 
 app = FastAPI()
 
-# CORSミドルウェアを追加
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["http://localhost", "http://localhost:80", "http://localhost:5173"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+ENV = os.getenv("ENV", "development")
+
+
+if ENV == "development":
+    origins = [
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+else:
+    pass
 
 
 def log_api_call(func):
@@ -84,12 +95,12 @@ async def stock_data():
 
     return JSONResponse(content=result)
 
-
-app.mount("/assets", StaticFiles(directory="frontend/build/assets", html=True), name="assets")
+if ENV == "production":
+    app.mount("/assets", StaticFiles(directory="frontend/dist/assets", html=True), name="assets")
 
 
 def find_favicon():
-    build_dir = "frontend/build/assets"
+    build_dir = "frontend/dist/assets"
     for file in os.listdir(build_dir):
         if file.startswith("favicon") and file.endswith(".ico"):
             return os.path.join(build_dir, file)
@@ -112,12 +123,12 @@ async def health_check():
 
 @app.get("/")
 async def read_root():
-    return FileResponse("frontend/build/index.html")
+    return FileResponse("frontend/dist/index.html")
 
 
 @app.get("/{full_path:path}")
 async def serve_react_app(full_path: str):
-    return FileResponse("frontend/build/index.html")
+    return FileResponse("frontend/dist/index.html")
 
 
 if __name__ == "__main__":
