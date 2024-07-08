@@ -42,7 +42,7 @@ RUN useradd -m myuser
 USER myuser
 
 # Gunicornを使用してアプリケーションを実行
-CMD ["gunicorn", "-w", "4", "-k", "uvicorn.workers.UvicornWorker", "main:app", "--bind", "0.0.0.0:8080"]
+CMD ["gunicorn", "main:app", "--workers", "1", "--worker-class", "uvicorn.workers.UvicornWorker", "--bind", "0.0.0.0:8080"]
 
 # ヘルスチェック
 HEALTHCHECK CMD curl --fail http://localhost:8080/health || exit 1
